@@ -1,0 +1,127 @@
+#include<reg52.h>  
+#include<intrins.h>	  
+typedef unsigned char uchar;
+typedef unsigned int uint;
+
+sbit LCD_RS = P1^0;	 
+sbit LCD_RW = P1^1;	 
+sbit LCD_EN = P1^2;	  
+sbit LCD_BF = P0^7;	 
+
+
+	void delay1ms()
+	{
+	  uchar i,j;
+	  for(i=0;i<10;i++)
+	  for(j=0;j<33;j++);
+	} 
+
+void delay(uchar n)
+ {
+   uchar i;
+   for(i=0;i<n;i++)
+   delay1ms();
+ }
+
+ uchar Busy_Test()
+  {
+  	bit result;
+	LCD_RS = 0;
+	LCD_RW = 1;
+	LCD_EN = 1;  
+	_nop_();    
+	_nop_(); 
+	_nop_();
+	_nop_();   
+	result = LCD_BF; 
+	LCD_EN = 0;
+	return result;
+
+  }
+
+  void Write_Instruction(uchar dictate)
+   {
+   	while(Busy_Test() == 1);  
+	LCD_RS = 0;   
+	LCD_RW = 0;
+	LCD_EN = 0;   
+	            
+	_nop_();
+	_nop_();    
+
+	P0 = dictate;
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();    
+
+	LCD_EN = 1;	
+
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();     
+
+	LCD_EN = 0 ;  
+   }
+
+  void Write_Address(uchar x)
+   {
+   	 Write_Instruction(x|0x80); 
+   }
+
+   void Write_Date(uchar y)
+    {
+	  while(Busy_Test() == 1);
+	  LCD_RS = 1; 
+	  LCD_RW = 0;
+	  LCD_EN = 0;
+	             
+	 P0 = y;	  
+
+	 _nop_();
+	 _nop_();
+	 _nop_();
+	 _nop_();   
+	 
+	 LCD_EN = 1;
+	 
+	 _nop_();
+	 _nop_();
+	 _nop_();
+	 _nop_(); 
+	 
+	 LCD_EN = 0;
+	    
+	}
+  
+ void Lcd_Init(void)
+  {
+   Busy_Test();
+   delay(15);   
+   Write_Instruction(0x38);  
+   delay(5);  
+   Write_Instruction(0x38);
+   delay(5);
+   Write_Instruction(0x0E); 
+   delay(5);
+   Write_Instruction(0x0d);	 
+   delay(5);
+   Write_Instruction(0x01);	 
+   delay(5);
+
+  }																						
+
+  
+  void main(void)
+   {
+    uchar date[4] = {"acbd"};
+	uchar i;
+   	Lcd_Init();
+	Write_Address(0x00); 
+	for (i=0;i<4;i++)
+	 {
+	   Write_Date(date[i]);
+	 }
+	while(1);
+   }
